@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guia Completo de Comandos de Diagnóstico de Rede</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        abyss: '#001219',      // Azul-marinho noturno profundo (fundo principal)
+                        deepsea: '#005F73',    // Azul-petróleo escuro (superfícies/bordas)
+                        lagoon: '#0A9396',     // Turquesa vibrante (destaques secundários)
+                        rust: '#CA6702',       // Âmbar queimado / laranja escuro (alertas/admin)
+                        goldglow: '#EE9B00',   // Ouro âmbar luminoso (títulos e foco)
+                    },
+                    boxShadow: {
+                        'amber-glow': '0 0 20px rgba(238, 155, 0, 0.25)',
+                        'lagoon-glow': '0 0 18px rgba(10, 147, 150, 0.22)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .text-glow-amber {
+            text-shadow: 0 0 18px rgba(238, 155, 0, 0.45), 0 0 4px rgba(202, 103, 2, 0.6);
+        }
+        .dark .card-night-market {
+            background: linear-gradient(180deg, rgba(0, 42, 56, 0.72) 0%, rgba(0, 18, 25, 0.96) 100%);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        /* Regras de Impressão / Exportação PDF Limpa */
+        @media print {
+            body {
+                background: #ffffff !important;
+                color: #001219 !important;
+            }
+            header, #toast, .no-print, button[onclick*="copyToClipboard"] span.shrink-0 {
+                display: none !important;
+            }
+            main {
+                max-width: 100% !important;
+                padding: 0 !important;
+            }
+            .card-night-market {
+                background: #ffffff !important;
+                border: 1px solid #cbd5e1 !important;
+                box-shadow: none !important;
+                break-inside: avoid;
+                page-break-inside: avoid;
+                margin-bottom: 12px;
+            }
+            code, pre, div.font-mono {
+                color: #001219 !important;
+                background: #f8fafc !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-[#F4F7F8] text-[#001219] dark:bg-abyss dark:text-slate-100 transition-colors duration-200 min-h-screen flex flex-col">
+
+    <!-- Notificação Toast para Cópia -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none flex items-center gap-2 bg-abyss dark:bg-lagoon text-white border border-goldglow/50 dark:border-white/20 px-4 py-3 rounded-xl shadow-amber-glow font-medium text-sm">
+        <i data-lucide="check-circle-2" class="w-5 h-5 text-goldglow dark:text-abyss"></i>
+        <span id="toast-msg">Comando copiado para a área de transferência!</span>
+    </div>
+
+    <!-- Cabeçalho Principal -->
+    <header class="sticky top-0 z-40 bg-white/90 dark:bg-abyss/90 backdrop-blur-md border-b border-deepsea/20 dark:border-deepsea/60">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 text-center md:text-left">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div class="flex flex-col items-center md:flex-row md:justify-between w-full md:w-auto gap-3">
+                    <div class="flex flex-col sm:flex-row items-center gap-3">
+                        <div class="p-2.5 bg-gradient-to-br from-rust to-goldglow text-abyss rounded-xl shadow-amber-glow">
+                            <i data-lucide="terminal" class="w-6 h-6 stroke-[2.25]"></i>
+                        </div>
+                        <div class="text-center sm:text-left">
+                            <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight uppercase text-deepsea dark:text-goldglow dark:text-glow-amber">
+                                Diagnóstico de Rede
+                            </h1>
+                            <p class="text-xs sm:text-sm font-medium text-rust dark:text-lagoon">
+                                Guia Interativo • Windows CMD, PowerShell & Linux
+                            </p>
+                        </div>
+                    </div>
+                    <!-- Botão Tema Claro/Escuro (Mobile) -->
+                    <button type="button" id="theme-toggle-mobile" aria-label="Alternar tema" class="md:hidden inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-deepsea/40 text-deepsea dark:text-goldglow border border-deepsea/20 dark:border-deepsea hover:bg-deepsea/10 dark:hover:bg-deepsea/70 text-xs font-semibold transition">
+                        <i data-lucide="moon" class="w-4 h-4 block dark:hidden"></i>
+                        <i data-lucide="sun" class="w-4 h-4 hidden dark:block"></i>
+                        <span>Alternar Tema</span>
+                    </button>
+                </div>
+
+                <!-- Barra de Busca e Controles -->
+                <div class="flex items-center justify-center gap-3 w-full md:w-auto">
+                    <div class="relative w-full max-w-md md:w-80 mx-auto md:mx-0">
+                        <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-deepsea dark:text-lagoon"></i>
+                        <input type="text" id="search-input" placeholder="Buscar comando, função ou sintaxe..." 
+                            class="w-full pl-10 pr-4 py-2.5 text-sm text-center md:text-left bg-slate-100 dark:bg-[#00222E] border border-deepsea/20 dark:border-deepsea focus:border-goldglow dark:focus:border-goldglow focus:bg-white dark:focus:bg-[#001A24] rounded-xl outline-none transition text-abyss dark:text-white placeholder-slate-400 dark:placeholder-slate-400">
+                        <button type="button" id="clear-search" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-goldglow">
+                            <i data-lucide="x" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    <!-- Botão Tema Claro/Escuro (Desktop) -->
+                    <button type="button" id="theme-toggle-desktop" aria-label="Alternar tema" class="hidden md:flex p-2.5 rounded-xl bg-slate-100 dark:bg-deepsea/40 text-deepsea dark:text-goldglow border border-deepsea/20 dark:border-deepsea hover:bg-deepsea/10 dark:hover:bg-deepsea/70 transition">
+                        <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+                        <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filtros de Categoria -->
+            <div class="flex flex-wrap items-center justify-center md:justify-start gap-2 pt-4" id="category-filters">
+                <button type="button" data-filter="all" class="filter-btn active px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold bg-goldglow text-abyss shadow-amber-glow transition">
+                    Todos (39)
+                </button>
+                <button type="button" data-filter="nivel1" class="filter-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium bg-slate-100 dark:bg-deepsea/30 text-deepsea dark:text-slate-200 border border-deepsea/15 dark:border-deepsea/70 hover:border-lagoon transition">
+                    Nível 1: Essencial Windows (8)
+                </button>
+                <button type="button" data-filter="nivel2-cmd" class="filter-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium bg-slate-100 dark:bg-deepsea/30 text-deepsea dark:text-slate-200 border border-deepsea/15 dark:border-deepsea/70 hover:border-lagoon transition">
+                    Nível 2: Complementares CMD (14)
+                </button>
+                <button type="button" data-filter="nivel2-ps" class="filter-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium bg-slate-100 dark:bg-deepsea/30 text-deepsea dark:text-slate-200 border border-deepsea/15 dark:border-deepsea/70 hover:border-lagoon transition">
+                    Nível 2: PowerShell (6)
+                </button>
+                <button type="button" data-filter="nivel2-linux" class="filter-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium bg-slate-100 dark:bg-deepsea/30 text-deepsea dark:text-slate-200 border border-deepsea/15 dark:border-deepsea/70 hover:border-lagoon transition">
+                    Nível 2: Linux (11)
+                </button>
+                <button type="button" data-filter="admin" class="filter-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold bg-rust/15 dark:bg-rust/30 text-rust dark:text-goldglow border border-rust/40 dark:border-rust hover:bg-rust/25 transition inline-flex items-center justify-center gap-1.5">
+                    <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i> Requer Admin/Root
+                </button>
+                <button type="button" onclick="window.print()" title="Imprimir ou Salvar PDF" class="px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold bg-deepsea/10 dark:bg-lagoon/20 text-deepsea dark:text-lagoon border border-deepsea/20 dark:border-lagoon/50 hover:bg-lagoon hover:text-abyss transition inline-flex items-center justify-center gap-1.5">
+                    <i data-lucide="printer" class="w-3.5 h-3.5"></i> Imprimir / PDF
+                </button>
+            </div>
+
+            <!-- Filtro Rápido por Objetivo Técnico (Camada/Função) -->
+            <div class="flex flex-wrap items-center justify-center md:justify-start gap-1.5 pt-2.5 text-xs" id="topic-filters">
+                <span class="text-deepsea/70 dark:text-slate-400 font-semibold mr-1">Objetivo:</span>
+                <button type="button" data-topic="all" class="topic-btn active px-2.5 py-1 rounded-md bg-deepsea text-white dark:bg-lagoon dark:text-abyss font-semibold transition">Todos</button>
+                <button type="button" data-topic="ip-interfaces" class="topic-btn px-2.5 py-1 rounded-md bg-slate-100 dark:bg-[#00222E] text-deepsea dark:text-slate-300 border border-deepsea/15 dark:border-deepsea/60 hover:border-goldglow transition">IP & Interfaces</button>
+                <button type="button" data-topic="dns" class="topic-btn px-2.5 py-1 rounded-md bg-slate-100 dark:bg-[#00222E] text-deepsea dark:text-slate-300 border border-deepsea/15 dark:border-deepsea/60 hover:border-goldglow transition">DNS & Domínios</button>
+                <button type="button" data-topic="rotas-latencia" class="topic-btn px-2.5 py-1 rounded-md bg-slate-100 dark:bg-[#00222E] text-deepsea dark:text-slate-300 border border-deepsea/15 dark:border-deepsea/60 hover:border-goldglow transition">Rotas & Latência</button>
+                <button type="button" data-topic="portas-trafego" class="topic-btn px-2.5 py-1 rounded-md bg-slate-100 dark:bg-[#00222E] text-deepsea dark:text-slate-300 border border-deepsea/15 dark:border-deepsea/60 hover:border-goldglow transition">Portas & Tráfego</button>
+                <button type="button" data-topic="rede-seguranca" class="topic-btn px-2.5 py-1 rounded-md bg-slate-100 dark:bg-[#00222E] text-deepsea dark:text-slate-300 border border-deepsea/15 dark:border-deepsea/60 hover:border-goldglow transition">Compartilhamento & Políticas</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Conteúdo Principal -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Painel NOC: Fluxo de Troubleshooting & Referência Técnica -->
+        <section class="mb-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Fluxo de Diagnóstico Passo a Passo -->
+            <div class="bg-white dark:bg-[#001D27] rounded-2xl border border-deepsea/20 dark:border-deepsea/80 p-5 shadow-sm text-center sm:text-left">
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-2 mb-4">
+                    <div class="flex items-center gap-2">
+                        <span class="p-1.5 rounded-lg bg-lagoon/15 text-deepsea dark:text-lagoon">
+                            <i data-lucide="git-branch" class="w-4 h-4"></i>
+                        </span>
+                        <h2 class="text-sm sm:text-base font-bold uppercase tracking-wide text-deepsea dark:text-goldglow">
+                            Checklist de Diagnóstico (Ordem Lógica)
+                        </h2>
+                    </div>
+                    <span class="text-[11px] font-medium text-rust dark:text-lagoon">De baixo para cima</span>
+                </div>
+                <ol class="space-y-2 text-xs text-left">
+                    <li class="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-50 dark:bg-abyss/80 border border-deepsea/10 dark:border-deepsea/50">
+                        <span><strong class="text-rust dark:text-goldglow">1. Pilha TCP/IP Local:</strong> Testar placa de rede</span>
+                        <button type="button" data-cmd="ping 127.0.0.1" onclick="copyToClipboard(this.getAttribute('data-cmd'))" class="font-mono px-2 py-1 rounded bg-deepsea/10 dark:bg-deepsea/40 text-deepsea dark:text-lagoon hover:text-goldglow transition">ping 127.0.0.1</button>
+                    </li>
+                    <li class="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-50 dark:bg-abyss/80 border border-deepsea/10 dark:border-deepsea/50">
+                        <span><strong class="text-rust dark:text-goldglow">2. Endereço & Gateway:</strong> Validar IP/DHCP</span>
+                        <button type="button" data-cmd="ipconfig /all" onclick="copyToClipboard(this.getAttribute('data-cmd'))" class="font-mono px-2 py-1 rounded bg-deepsea/10 dark:bg-deepsea/40 text-deepsea dark:text-lagoon hover:text-goldglow transition">ipconfig /all</button>
+                    </li>
+                    <li class="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-50 dark:bg-abyss/80 border border-deepsea/10 dark:border-deepsea/50">
+                        <span><strong class="text-rust dark:text-goldglow">3. Saída Internet (IP):</strong> Testar sem DNS</span>
+                        <button type="button" data-cmd="ping 8.8.8.8" onclick="copyToClipboard(this.getAttribute('data-cmd'))" class="font-mono px-2 py-1 rounded bg-deepsea/10 dark:bg-deepsea/40 text-deepsea dark:text-lagoon hover:text-goldglow transition">ping 8.8.8.8</button>
+                    </li>
+                    <li class="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-50 dark:bg-abyss/80 border border-deepsea/10 dark:border-deepsea/50">
+                        <span><strong class="text-rust dark:text-goldglow">4. Resolução DNS:</strong> Traduzir nomes</span>
+                        <button type="button" data-cmd="nslookup google.com" onclick="copyToClipboard(this.getAttribute('data-cmd'))" class="font-mono px-2 py-1 rounded bg-deepsea/10 dark:bg-deepsea/40 text-deepsea dark:text-lagoon hover:text-goldglow transition">nslookup google.com</button>
+                    </li>
+                    <li class="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-50 dark:bg-abyss/80 border border-deepsea/10 dark:border-deepsea/50">
+                        <span><strong class="text-rust dark:text-goldglow">5. Porta/Serviço:</strong> Checar bloqueio firewall</span>
+                        <button type="button" data-cmd="Test-NetConnection -ComputerName google.com -Port 443" onclick="copyToClipboard(this.getAttribute('data-cmd'))" class="font-mono px-2 py-1 rounded bg-deepsea/10 dark:bg-deepsea/40 text-deepsea dark:text-lagoon hover:text-goldglow transition">Test-NetConnection :443</button>
+                    </li>
+                </ol>
+            </div>
+
+            <!-- Tabela de Equivalência & Cola Rápida de Portas/Estados -->
+            <div class="bg-white dark:bg-[#001D27] rounded-2xl border border-deepsea/20 dark:border-deepsea/80 p-5 shadow-sm flex flex-col justify-between text-center sm:text-left">
+                <div>
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-2 mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="p-1.5 rounded-lg bg-goldglow/15 text-rust dark:text-goldglow">
+                                <i data-lucide="arrow-left-right" class="w-4 h-4"></i>
+                            </span>
+                            <h2 class="text-sm sm:text-base font-bold uppercase tracking-wide text-deepsea dark:text-goldglow">
+                                Equivalência Multiplataforma
+                            </h2>
+                        </div>
+                        <span class="text-[11px] font-medium text-rust dark:text-lagoon">CMD × PowerShell × Linux</span>
+                    </div>
+                    <div class="overflow-x-auto rounded-xl border border-deepsea/15 dark:border-deepsea/60 mb-4">
+                        <table class="w-full text-[11px] font-mono text-left">
+                            <thead class="bg-slate-100 dark:bg-abyss text-deepsea dark:text-goldglow font-sans">
+                                <tr>
+                                    <th class="px-2.5 py-1.5">Windows CMD</th>
+                                    <th class="px-2.5 py-1.5">PowerShell</th>
+                                    <th class="px-2.5 py-1.5">Linux</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-deepsea/10 dark:divide-deepsea/50 text-slate-700 dark:text-slate-200">
+                                <tr><td class="px-2.5 py-1.5">ipconfig /all</td><td class="px-2.5 py-1.5">Get-NetIPConfiguration</td><td class="px-2.5 py-1.5">ip a</td></tr>
+                                <tr><td class="px-2.5 py-1.5">netstat -ano</td><td class="px-2.5 py-1.5">Get-NetTCPConnection</td><td class="px-2.5 py-1.5">ss -tunap</td></tr>
+                                <tr><td class="px-2.5 py-1.5">nslookup</td><td class="px-2.5 py-1.5">Resolve-DnsName</td><td class="px-2.5 py-1.5">dig</td></tr>
+                                <tr><td class="px-2.5 py-1.5">tracert / pathping</td><td class="px-2.5 py-1.5">Test-NetConnection -TraceRoute</td><td class="px-2.5 py-1.5">traceroute / mtr</td></tr>
+                                <tr><td class="px-2.5 py-1.5">arp -a</td><td class="px-2.5 py-1.5">Get-NetNeighbor</td><td class="px-2.5 py-1.5">ip neigh</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <!-- Cola de Portas e Estados TCP -->
+                <div class="pt-2 border-t border-deepsea/15 dark:border-deepsea/50 text-[11px] text-slate-600 dark:text-slate-300 space-y-1">
+                    <p><strong class="text-rust dark:text-goldglow">Portas Críticas:</strong> <code class="font-mono">22</code> SSH • <code class="font-mono">53</code> DNS • <code class="font-mono">80/443</code> HTTP/S • <code class="font-mono">445</code> SMB • <code class="font-mono">3389</code> RDP</p>
+                    <p><strong class="text-deepsea dark:text-lagoon">Estados TCP:</strong> <code class="font-mono">LISTENING</code> (Aguardando) • <code class="font-mono">ESTABLISHED</code> (Ativa) • <code class="font-mono">SYN_SENT</code> (Tentando conectar / possível bloqueio)</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Banner de Acesso Rápido (Resumo dos Mais Usados) -->
+        <section class="mb-10 bg-white dark:bg-gradient-to-r dark:from-[#002330] dark:via-[#003242] dark:to-[#001D26] rounded-2xl border border-deepsea/20 dark:border-lagoon/40 p-5 sm:p-6 shadow-sm dark:shadow-lagoon-glow relative overflow-hidden text-center sm:text-left">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-2 mb-4">
+                <div class="flex flex-col sm:flex-row items-center gap-2.5">
+                    <span class="p-2 rounded-lg bg-goldglow/20 text-rust dark:text-goldglow border border-goldglow/40">
+                        <i data-lucide="zap" class="w-5 h-5"></i>
+                    </span>
+                    <h2 class="text-base sm:text-lg font-bold uppercase tracking-wide text-deepsea dark:text-goldglow">
+                        Kit de Emergência: Comandos Mais Usados
+                    </h2>
+                </div>
+                <span class="text-xs font-medium text-rust dark:text-lagoon">Toque em qualquer comando abaixo para copiar</span>
+            </div>
+            <div id="quick-commands" class="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                <!-- Preenchido via JS -->
+            </div>
+        </section>
+
+        <!-- Contador de Resultados -->
+        <div class="flex items-center justify-center sm:justify-between mb-6 text-center sm:text-left">
+            <p id="results-count" class="text-sm font-medium text-deepsea dark:text-lagoon">
+                Exibindo todos os 33 comandos
+            </p>
+        </div>
+
+        <!-- Grid de Cards dos Comandos -->
+        <div id="commands-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
+            <!-- Cards gerados dinamicamente via JavaScript -->
+        </div>
+
+        <!-- Estado Vazio (Busca sem resultados) -->
+        <div id="empty-state" class="hidden text-center py-16 px-4 bg-white dark:bg-[#001E29] rounded-2xl border border-deepsea/20 dark:border-deepsea">
+            <div class="inline-flex p-4 rounded-full bg-deepsea/10 dark:bg-deepsea/40 text-rust dark:text-goldglow mb-4">
+                <i data-lucide="search-x" class="w-8 h-8"></i>
+            </div>
+            <h3 class="text-lg font-bold text-abyss dark:text-goldglow mb-1">Nenhum comando encontrado</h3>
+            <p class="text-sm text-slate-600 dark:text-slate-300 mb-4">Tente buscar por outro termo ou limpe os filtros ativos.</p>
+            <button type="button" id="reset-filters-btn" class="px-5 py-2.5 bg-goldglow hover:bg-rust text-abyss hover:text-white text-sm font-bold rounded-xl shadow-amber-glow transition">
+                Mostrar todos os comandos
+            </button>
+        </div>
+
+    </main>
+
+    <!-- Rodapé -->
+    <footer class="bg-white dark:bg-abyss border-t border-deepsea/20 dark:border-deepsea/60 py-6 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-4 text-center sm:text-left text-xs text-deepsea dark:text-slate-400">
+            <p class="text-rust dark:text-goldglow font-semibold">Guia de Referência Rápida para Diagnóstico de Redes (Windows CMD, PowerShell e Linux).</p>
+            <p class="flex items-center justify-center gap-1.5 text-rust dark:text-goldglow font-semibold">
+                <i data-lucide="shield-check" class="w-4 h-4 text-lagoon"></i>
+                ALEXANDER
+            </p>
+        </div>
+    </footer>
+
+    <!-- Lógica e Base de Dados dos Comandos -->
+    <script>
+        const colorStyles = {
+            blue:    { border: 'border-t-[#005F73]', badge: 'bg-[#005F73]/15 text-[#005F73] dark:bg-[#005F73]/50 dark:text-[#7CE8EC]', dot: 'bg-[#005F73] dark:bg-[#0A9396]' },
+            green:   { border: 'border-t-[#0A9396]', badge: 'bg-[#0A9396]/15 text-[#005F73] dark:bg-[#0A9396]/30 dark:text-[#6FF7F9]', dot: 'bg-[#0A9396]' },
+            orange:  { border: 'border-t-[#EE9B00]', badge: 'bg-[#EE9B00]/20 text-[#9A4E00] dark:bg-[#EE9B00]/25 dark:text-[#EE9B00]', dot: 'bg-[#EE9B00]' },
+            violet:  { border: 'border-t-[#CA6702]', badge: 'bg-[#CA6702]/15 text-[#CA6702] dark:bg-[#CA6702]/30 dark:text-[#FFB347]', dot: 'bg-[#CA6702]' },
+            teal:    { border: 'border-t-[#0A9396]', badge: 'bg-[#0A9396]/15 text-[#005F73] dark:bg-[#0A9396]/30 dark:text-[#6FF7F9]', dot: 'bg-[#0A9396]' },
+            red:     { border: 'border-t-[#CA6702]', badge: 'bg-[#CA6702]/15 text-[#CA6702] dark:bg-[#CA6702]/30 dark:text-[#FFB347]', dot: 'bg-[#CA6702]' },
+            magenta: { border: 'border-t-[#EE9B00]', badge: 'bg-[#EE9B00]/20 text-[#9A4E00] dark:bg-[#EE9B00]/25 dark:text-[#EE9B00]', dot: 'bg-[#EE9B00]' },
+            cyan:    { border: 'border-t-[#0A9396]', badge: 'bg-[#0A9396]/15 text-[#005F73] dark:bg-[#0A9396]/30 dark:text-[#6FF7F9]', dot: 'bg-[#0A9396]' },
+            purple:  { border: 'border-t-[#005F73]', badge: 'bg-[#005F73]/15 text-[#005F73] dark:bg-[#005F73]/50 dark:text-[#7CE8EC]', dot: 'bg-[#005F73] dark:bg-[#0A9396]' },
+            brown:   { border: 'border-t-[#CA6702]', badge: 'bg-[#CA6702]/15 text-[#CA6702] dark:bg-[#CA6702]/30 dark:text-[#FFB347]', dot: 'bg-[#CA6702]' },
+            olive:   { border: 'border-t-[#0A9396]', badge: 'bg-[#0A9396]/15 text-[#005F73] dark:bg-[#0A9396]/30 dark:text-[#6FF7F9]', dot: 'bg-[#0A9396]' },
+            lime:    { border: 'border-t-[#EE9B00]', badge: 'bg-[#EE9B00]/20 text-[#9A4E00] dark:bg-[#EE9B00]/25 dark:text-[#EE9B00]', dot: 'bg-[#EE9B00]' },
+            pink:    { border: 'border-t-[#CA6702]', badge: 'bg-[#CA6702]/15 text-[#CA6702] dark:bg-[#CA6702]/30 dark:text-[#FFB347]', dot: 'bg-[#CA6702]' },
+            gray:    { border: 'border-t-[#005F73]', badge: 'bg-[#005F73]/15 text-[#005F73] dark:bg-[#005F73]/50 dark:text-[#7CE8EC]', dot: 'bg-[#005F73] dark:bg-[#0A9396]' },
+        };
+
+        const quickCommandsList = [
+            'ipconfig /all',
+            'ipconfig /flushdns',
+            'ping 8.8.8.8',
+            'ping -t 8.8.8.8',
+            'nslookup google.com 8.8.8.8',
+            'tracert -d 8.8.8.8',
+            'pathping -n 8.8.8.8',
+            'Test-NetConnection -ComputerName google.com -Port 443',
+            'arp -a',
+            'netstat -ano',
+            'netsh int ip reset',
+            'netsh winsock reset',
+            'route print',
+            'tasklist /fi "PID eq 4452"',
+            'Get-NetTCPConnection -State Listen',
+            'Resolve-DnsName google.com',
+            'ss -tuln',
+            'dig google.com',
+            'mtr -rwc 20 google.com'
+        ];
+
+        const commandsData = [
+            // NÍVEL 1: DIAGNÓSTICO ESSENCIAL (WINDOWS)
+            {
+                id: 1,
+                name: 'ipconfig',
+                category: 'nivel1',
+                topic: 'ip-interfaces',
+                categoryLabel: 'Nível 1 • Windows CMD',
+                color: 'blue',
+                admin: false,
+                whatItDoes: 'Exibe a configuração TCP/IP completa das placas de rede do computador (endereço IPv4/IPv6, máscara de sub-rede, gateway padrão e servidores DNS). É o primeiro comando a rodar para verificar se a máquina recebeu um IP válido do roteador/DHCP.',
+                syntax: [
+                    'ipconfig',
+                    'ipconfig /all',
+                    'ipconfig /release',
+                    'ipconfig /renew',
+                    'ipconfig /displaydns',
+                    'ipconfig /flushdns'
+                ],
+                examples: [
+                    'ipconfig /all',
+                    'ipconfig /flushdns',
+                    'ipconfig /release',
+                    'ipconfig /renew'
+                ],
+                tip: '/all exibe endereço físico (MAC), servidor DHCP e tempo de concessão; /release e /renew renovam o IP; /flushdns limpa o cache de DNS local.'
+            },
+            {
+                id: 2,
+                name: 'ping',
+                category: 'nivel1',
+                topic: 'rotas-latencia',
+                categoryLabel: 'Nível 1 • Windows CMD',
+                color: 'green',
+                admin: false,
+                whatItDoes: 'Envia pacotes ICMP (Echo Request) para um host ou IP de destino e mede o tempo de ida e volta (latência em milissegundos). Permite diagnosticar rapidamente se há conectividade básica, estabilidade e perda de pacotes.',
+                syntax: [
+                    'ping <endereco_IP_ou_nome>',
+                    'ping -t <endereco_IP_ou_nome>',
+                    'ping -4 <endereco_IP_ou_nome>'
+                ],
+                examples: [
+                    'ping 8.8.8.8',
+                    'ping -t 8.8.8.8',
+                    'ping -4 google.com'
+                ],
+                tip: 'No modo contínuo (ping -t), pressione Ctrl + Break para ver estatísticas parciais sem interromper o teste, ou Ctrl + C para encerrar.'
+            },
+            {
+                id: 3,
+                name: 'nslookup',
+                category: 'nivel1',
+                topic: 'dns',
+                categoryLabel: 'Nível 1 • Windows CMD',
+                color: 'orange',
+                admin: false,
+                whatItDoes: 'Consulta servidores DNS para traduzir nomes de domínio (ex.: google.com) em endereços IP ou fazer resolução reversa. Fundamental para isolar se uma falha de navegação é causada pelo DNS da rede ou por queda de link.',
+                syntax: [
+                    'nslookup <nome>',
+                    'nslookup <nome> <IP_do_servidor_DNS>'
+                ],
+                examples: [
+                    'nslookup google.com',
+                    'nslookup google.com 8.8.8.8'
+                ],
+                tip: 'Informar um DNS externo no final (como 8.8.8.8 ou 1.1.1.1) permite testar se o DNS interno da empresa falhou enquanto a internet continua ativa.'
+            },
+            {
+                id: 4,
+                name: 'tracert',
+                category: 'nivel1',
+                topic: 'rotas-latencia',
+                categoryLabel: 'Nível 1 • Windows CMD',
+                color: 'violet',
+                admin: false,
+                whatItDoes: 'Rastreia a rota salto a salto (hop by hop) que os pacotes percorrem do seu computador até o destino final, exibindo cada roteador intermediário e a latência de cada trecho. Ideal para identificar onde ocorre lentidão ou bloqueio.',
+                syntax: [
+                    'tracert <destino>',
+                    'tracert -d <destino>'
+                ],
+                examples: [
+                    'tracert 8.8.8.8',
+                    'tracert -d 8.8.8.8'
+                ],
+                tip: 'O parâmetro -d evita a resolução reversa de nomes DNS dos roteadores intermediários, tornando o rastreamento muito mais rápido.'
+            },
+            {
+                id: 5,
+                name: 'pathping',
+                category: 'nivel1',
+                topic: 'rotas-latencia',
+                categoryLabel: 'Nível 1 • Windows CMD',
+                color: 'teal',
+                admin: false,
+                whatItDoes: 'Combina as funções do tracert e do ping: primeiro mapeia a rota até o destino e depois envia pacotes continuamente para calcular a porcentagem exata de perda em cada roteador do caminho.',
+                syntax: [
+                    'pathping <destino>',
+                    'pathping -n <destino>',
+                    'pathping -q <consultas> <destino>',
+                    'pathping -w <timeout_ms> <destino>',
+                    'pathping -h <max_saltos> <destino>'
+                ],
+                examples: [
+                    'pathping 8.8.8.8',
+                    'pathping -n 8.8.8.8',
+                    'pathping -q 10 -w 500 8.8.8.8'
+                ],
+                tip: '-n ignora resolução de nomes; -q define a quantidade de consultas por salto; -w ajusta o tempo limite em ms; -h limita o máximo de saltos.'
+            },
+            {
+                id: 6,
+                name: 'Test-NetConnection',
+                category: 'nivel1',
+                topic: 'portas-trafego',
+                categoryLabel: 'Nível 1 • PowerShell',
+                color: 'red',
+                admin: false,
+                whatItDoes: 'Cmdlet moderno do PowerShell que testa conectividade TCP a uma porta específica — algo que o ping tradicional não faz. Confirma se um serviço (Web, RDP, banco de dados, SMB) está realmente acessível e sem bloqueio de firewall.',
+                syntax: [
+                    'Test-NetConnection -ComputerName <IP_ou_nome> -Port <numero>',
+                    'Test-NetConnection -ComputerName <IP_ou_nome> -CommonTCPPort <servico>',
+                    'Test-NetConnection -ComputerName <IP_ou_nome> -TraceRoute'
+                ],
+                examples: [
+                    'Test-NetConnection -ComputerName 8.8.8.8 -Port 443',
+                    'Test-NetConnection -ComputerName google.com -CommonTCPPort HTTP',
+                    'Test-NetConnection -ComputerName 8.8.8.8 -TraceRoute'
+                ],
+                tip: 'Execute no PowerShell. O parâmetro -CommonTCPPort aceita atalhos prontos como HTTP, RDP, SMB e WinRM.'
+            },
+            {
+                id: 7,
+                name: 'arp',
+                category: 'nivel1',
+                topic: 'ip-interfaces',
+                categoryLabel: 'Nível 1 • Windows CMD',
+                color: 'magenta',
+                admin: true,
+                adminNote: 'Limpar o cache (arp -d) exige privilégios de Administrador',
+                whatItDoes: 'Exibe e gerencia a tabela ARP (Address Resolution Protocol), que mapeia endereços IP locais aos endereços físicos (MAC) das placas de rede. Essencial para detectar conflitos de IP e identificar dispositivos na mesma sub-rede.',
+                syntax: [
+                    'arp -a',
+                    'arp -d <endereco_IP>'
+                ],
+                examples: [
+                    'arp -a',
+                    'arp -d 192.168.1.1'
+                ],
+                tip: 'Use arp -d <IP> (como Administrador) para apagar uma entrada em cache e forçar uma nova descoberta MAC na rede local.'
+            },
+            {
+                id: 8,
+                name: 'netstat',
+                category: 'nivel1',
+                topic: 'portas-trafego',
+                categoryLabel: 'Nível 1 • Windows CMD',
+                color: 'cyan',
+                admin: false,
+                whatItDoes: 'Lista todas as conexões de rede ativas (TCP/UDP), portas em escuta (LISTENING), conexões estabelecidas (ESTABLISHED) e o ID do processo (PID) responsável por cada conexão.',
+                syntax: [
+                    'netstat -a -n -o',
+                    'netstat -ano',
+                    'netstat -ano | findstr :<porta>'
+                ],
+                examples: [
+                    'netstat -ano',
+                    'netstat -ano | findstr :80',
+                    'netstat -ano | findstr :443'
+                ],
+                tip: '-a mostra todas as conexões; -n exibe IPs e portas em formato numérico; -o mostra o PID. Combine com tasklist para descobrir o programa.'
+            },
+
+            // NÍVEL 2: COMANDOS COMPLEMENTARES (WINDOWS CMD)
+            {
+                id: 9,
+                name: 'netsh',
+                category: 'nivel2-cmd',
+                topic: 'ip-interfaces',
+                categoryLabel: 'Nível 2 • Windows CMD',
+                color: 'purple',
+                admin: true,
+                adminNote: 'Alterações de rede e resets exigem Administrador',
+                whatItDoes: 'Ferramenta administrativa completa de rede do Windows: permite configurar IPs estáticos, visualizar senhas/perfis Wi-Fi, checar o status do Firewall e redefinir a pilha TCP/IP ou o catálogo Winsock corrompido.',
+                syntax: [
+                    'netsh interface ip show config',
+                    'netsh interface ipv4 set address name="Ethernet" source=static address=192.168.1.100 mask=255.255.255.0 gateway=192.168.1.1',
+                    'netsh wlan show profiles',
+                    'netsh advfirewall show allprofiles',
+                    'netsh int ip reset',
+                    'netsh winsock reset'
+                ],
+                examples: [
+                    'netsh interface ip show config',
+                    'netsh wlan show profiles',
+                    'netsh advfirewall show allprofiles',
+                    'netsh int ip reset',
+                    'netsh winsock reset'
+                ],
+                tip: 'netsh int ip reset e netsh winsock reset resolvem falhas graves de rede no Windows (exigem execução como Administrador e reinicialização).'
+            },
+            {
+                id: 10,
+                name: 'route',
+                category: 'nivel2-cmd',
+                topic: 'rotas-latencia',
+                categoryLabel: 'Nível 2 • Windows CMD',
+                color: 'brown',
+                admin: true,
+                adminNote: 'Adicionar ou remover rotas exige Administrador',
+                whatItDoes: 'Exibe e manipula a tabela de roteamento do sistema operacional, mostrando por qual gateway e interface os pacotes são enviados para cada rede. Permite criar rotas estáticas para VPNs ou redes internas.',
+                syntax: [
+                    'route print',
+                    'route add <destino> mask <mascara> <gateway>',
+                    'route -p add <destino> mask <mascara> <gateway>',
+                    'route delete <destino>'
+                ],
+                examples: [
+                    'route print',
+                    'route print 10.*',
+                    'route add 10.41.0.0 mask 255.255.0.0 10.27.0.1',
+                    'route -p add 157.0.0.0 mask 255.255.0.0 157.55.80.1',
+                    'route delete 10.41.0.0 mask 255.255.0.0'
+                ],
+                tip: 'A opção -p torna a rota persistente, mantendo-a salva mesmo após reiniciar o computador.'
+            },
+            {
+                id: 11,
+                name: 'getmac',
+                category: 'nivel2-cmd',
+                topic: 'ip-interfaces',
+                categoryLabel: 'Nível 2 • Windows CMD',
+                color: 'olive',
+                admin: false,
+                whatItDoes: 'Exibe o endereço físico (MAC Address) de todos os adaptadores de rede instalados na máquina, incluindo placas físicas e virtuais, juntamente com o status do transporte.',
+                syntax: [
+                    'getmac',
+                    'getmac /v',
+                    'getmac /fo table /nh'
+                ],
+                examples: [
+                    'getmac /v',
+                    'getmac /fo csv /nh'
+                ],
+                tip: '/v exibe o nome amigável da conexão e o fabricante; /fo permite exportar em formato table, list ou csv para inventários.'
+            },
+            {
+                id: 12,
+                name: 'hostname',
+                category: 'nivel2-cmd',
+                topic: 'ip-interfaces',
+                categoryLabel: 'Nível 2 • Windows CMD',
+                color: 'lime',
+                admin: false,
+                whatItDoes: 'Exibe rapidamente o nome do computador (host) registrado na rede local ou domínio. Muito útil em sessões remotas (SSH/RDP) para confirmar em qual servidor você está operando.',
+                syntax: [
+                    'hostname'
+                ],
+                examples: [
+                    'hostname'
+                ],
+                tip: 'Funciona exatamente com a mesma sintaxe tanto no Windows (CMD/PowerShell) quanto no Linux.'
+            },
+            {
+                id: 13,
+                name: 'nbtstat',
+                category: 'nivel2-cmd',
+                topic: 'dns',
+                categoryLabel: 'Nível 2 • Windows CMD',
+                color: 'pink',
+                admin: false,
+                whatItDoes: 'Exibe estatísticas de protocolo e tabelas de nomes NetBIOS sobre TCP/IP. Permite consultar remotamente o nome NetBIOS e o endereço MAC de outras máquinas Windows na rede local.',
+                syntax: [
+                    'nbtstat -n',
+                    'nbtstat -c',
+                    'nbtstat -a <nome_remoto>',
+                    'nbtstat -A <IP_remoto>'
+                ],
+                examples: [
+                    'nbtstat -n',
+                    'nbtstat -c',
+                    'nbtstat -a CHINAMI-007720',
+                    'nbtstat -A 192.168.3.245'
+                ],
+                tip: 'Use -A (maiúsculo) seguido do IP remoto para descobrir o nome da máquina e seu endereço MAC na rede interna.'
+            },
+            {
+                id: 14,
+                name: 'tasklist',
+                category: 'nivel2-cmd',
+                topic: 'portas-trafego',
+                categoryLabel: 'Nível 2 • Windows CMD',
+                color: 'cyan',
+                admin: false,
+                whatItDoes: 'Lista todos os processos e serviços em execução no Windows com seus respectivos PIDs e consumo de memória. Trabalha em conjunto com o netstat -ano para identificar qual programa ocupa uma porta.',
+                syntax: [
+                    'tasklist',
+                    'tasklist /fi "PID eq <numero>"',
+                    'tasklist /fi "USERNAME eq <usuario>"',
+                    'tasklist /v'
+                ],
+                examples: [
+                    'tasklist /fi "PID eq 4452"',
+                    'tasklist /fi "PID eq 4452" /fo list'
+                ],
+                tip: 'Após achar o PID pelo comando netstat -ano | findstr :443, filtre-o com tasklist /fi "PID eq <PID>" para saber o executável exato.'
+            },
+            {
+                id: 15,
+                name: 'curl',
+                category: 'nivel2-cmd',
+                topic: 'portas-trafego',
+                categoryLabel: 'Nível 2 • Windows CMD',
+                color: 'orange',
+                admin: false,
+                whatItDoes: 'Realiza requisições HTTP/HTTPS diretamente pelo terminal, exibindo códigos de status (200, 404, 500), cabeçalhos de resposta, certificados SSL e conteúdo de APIs sem precisar abrir um navegador.',
+                syntax: [
+                    'curl -I <URL>',
+                    'curl <URL>',
+                    'curl -O <URL>',
+                    'curl -X POST <URL> -H "Content-Type: application/json" -d "{...}"'
+                ],
+                examples: [
+                    'curl -I https://www.google.com',
+                    'curl https://api.example.com/data',
+                    'curl -O https://example.com/file.zip'
+                ],
+                tip: 'No PowerShell, use curl.exe para invocar o utilitário real em vez do alias interno Invoke-WebRequest.'
+            },
+            {
+                id: 16,
+                name: 'wget',
+                category: 'nivel2-cmd',
+                topic: 'portas-trafego',
+                categoryLabel: 'Nível 2 • Windows CMD',
+                color: 'green',
+                admin: false,
+                whatItDoes: 'Utilitário de linha de comando para download de arquivos via HTTP, HTTPS e FTP, com suporte a retomada de downloads interrompidos, renomeação e espelhamento recursivo.',
+                syntax: [
+                    'wget <URL>',
+                    'wget -O <novo_nome> <URL>',
+                    'wget -c <URL>',
+                    'wget -r -np <URL>'
+                ],
+                examples: [
+                    'wget https://example.com/test.jpg',
+                    'wget -O backup.zip https://example.com/arquivo.zip',
+                    'wget -c https://example.com/arquivo_grande.iso'
+                ],
+                tip: 'Nativo na maioria das distribuições Linux. No Windows CMD, requer o binário wget.exe instalado no PATH (no PowerShell, wget é alias para Invoke-WebRequest).'
+            },
+            {
+                id: 17,
+                name: 'telnet',
+                category: 'nivel2-cmd',
+                topic: 'portas-trafego',
+                categoryLabel: 'Nível 2 • Windows CMD',
+                color: 'gray',
+                admin: false,
+                whatItDoes: 'Abre uma sessão TCP crua com um servidor e porta específicos. Se a tela ficar preta ou exibir o banner do serviço, confirma que a porta está aberta e aceitando conexões.',
+                syntax: [
+                    'telnet <host> <porta>'
+                ],
+                examples: [
+                    'telnet 192.168.1.1 80',
+                    'telnet 192.168.1.50 3306',
+                    'telnet localhost 8000'
+                ],
+                tip: 'No Windows, o Cliente Telnet vem desativado por padrão; ative-o em "Ativar ou desativar recursos do Windows" ou use Test-NetConnection.'
+            },
+            {
+                id: 18,
+                name: 'net use',
+                category: 'nivel2-cmd',
+                topic: 'rede-seguranca',
+                categoryLabel: 'Nível 2 • Windows CMD',
+                color: 'red',
+                admin: false,
+                whatItDoes: 'Mapeia, lista e desconecta pastas compartilhadas na rede (protocolo SMB/CIFS) atribuindo uma letra de unidade local (ex.: Z:) a um caminho de servidor ou NAS.',
+                syntax: [
+                    'net use',
+                    'net use <letra>: \\\\<servidor>\\<pasta>',
+                    'net use <letra>: /delete'
+                ],
+                examples: [
+                    'net use',
+                    'net use Z: \\\\servidor\\pasta',
+                    'net use Z: /delete'
+                ],
+                tip: 'Excelente para diagnosticar problemas de permissão SMB ou credenciais em cache no Windows.'
+            },
+            {
+                id: 19,
+                name: 'net share',
+                category: 'nivel2-cmd',
+                topic: 'rede-seguranca',
+                categoryLabel: 'Nível 2 • Windows CMD',
+                color: 'teal',
+                admin: true,
+                adminNote: 'Criar ou remover compartilhamentos exige Administrador',
+                whatItDoes: 'Lista, cria e remove compartilhamentos de pastas locais na rede. Permite auditar rapidamente quais pastas (incluindo compartilhamentos administrativos como C$) estão expostas na máquina.',
+                syntax: [
+                    'net share',
+                    'net share <nome>=<unidade>:\\<caminho>',
+                    'net share <nome> /delete'
+                ],
+                examples: [
+                    'net share',
+                    'net share DataShare=C:\\Data /remark:"Dados"',
+                    'net share DataShare /delete'
+                ],
+                tip: 'Execute apenas net share sem parâmetros para auditar todos os recursos compartilhados atualmente pelo computador.'
+            },
+            {
+                id: 20,
+                name: 'net view',
+                category: 'nivel2-cmd',
+                topic: 'rede-seguranca',
+                categoryLabel: 'Nível 2 • Windows CMD',
+                color: 'violet',
+                admin: false,
+                whatItDoes: 'Lista os computadores, servidores e recursos compartilhados visíveis no grupo de trabalho ou domínio da rede local via descoberta de rede/NetBIOS.',
+                syntax: [
+                    'net view',
+                    'net view \\\\<computador>',
+                    'net view /DOMAIN:<dominio>'
+                ],
+                examples: [
+                    'net view',
+                    'net view \\\\servidor'
+                ],
+                tip: 'Ajuda a validar se a estação consegue enxergar os servidores da rede local pelo nome.'
+            },
+
+            // NÍVEL 2: EQUIVALENTES POWERSHELL
+            {
+                id: 21,
+                name: 'Get-NetIPConfiguration',
+                category: 'nivel2-ps',
+                topic: 'ip-interfaces',
+                categoryLabel: 'Nível 2 • PowerShell',
+                color: 'blue',
+                admin: false,
+                whatItDoes: 'Equivalente moderno e estruturado ao ipconfig /all no PowerShell. Retorna objetos contendo interfaces, endereços IPv4/IPv6, gateway padrão, servidores DNS e status do link.',
+                syntax: [
+                    'Get-NetIPConfiguration',
+                    'Get-NetIPConfiguration -Detailed',
+                    'Get-NetIPConfiguration -InterfaceAlias "Ethernet"'
+                ],
+                examples: [
+                    'Get-NetIPConfiguration',
+                    'Get-NetIPConfiguration -Detailed'
+                ],
+                tip: 'Por retornar objetos do PowerShell, permite filtrar propriedades facilmente em scripts de automação.'
+            },
+            {
+                id: 22,
+                name: 'Get-NetTCPConnection',
+                category: 'nivel2-ps',
+                topic: 'portas-trafego',
+                categoryLabel: 'Nível 2 • PowerShell',
+                color: 'red',
+                admin: false,
+                whatItDoes: 'Substituto moderno do netstat -ano no PowerShell, com filtros nativos por estado da conexão, porta local/remota e ID do processo (OwningProcess).',
+                syntax: [
+                    'Get-NetTCPConnection',
+                    'Get-NetTCPConnection -State Listen',
+                    'Get-NetTCPConnection -LocalPort <porta>'
+                ],
+                examples: [
+                    'Get-NetTCPConnection -State Listen',
+                    'Get-NetTCPConnection -LocalPort 443',
+                    'Get-NetTCPConnection -LocalPort 443 | Select-Object LocalAddress, LocalPort, State, OwningProcess'
+                ],
+                tip: 'Permite encadear diretamente com Get-Process para exibir o nome do aplicativo dono da porta sem precisar consultar o PID manualmente.'
+            },
+            {
+                id: 23,
+                name: 'Resolve-DnsName',
+                category: 'nivel2-ps',
+                topic: 'dns',
+                categoryLabel: 'Nível 2 • PowerShell',
+                color: 'orange',
+                admin: false,
+                whatItDoes: 'Equivalente avançado ao nslookup no PowerShell, retornando objetos estruturados e suportando consultas específicas de registros DNS (A, AAAA, MX, TXT, PTR, NS, CNAME).',
+                syntax: [
+                    'Resolve-DnsName <nome>',
+                    'Resolve-DnsName <nome> -Type <tipo>'
+                ],
+                examples: [
+                    'Resolve-DnsName google.com',
+                    'Resolve-DnsName google.com -Type MX',
+                    'Resolve-DnsName 8.8.8.8 -Type PTR'
+                ],
+                tip: 'Use -Type MX para diagnosticar servidores de e-mail e -Type PTR para consulta reversa de IP.'
+            },
+            {
+                id: 24,
+                name: 'Get-NetNeighbor',
+                category: 'nivel2-ps',
+                topic: 'ip-interfaces',
+                categoryLabel: 'Nível 2 • PowerShell',
+                color: 'magenta',
+                admin: false,
+                whatItDoes: 'Equivalente moderno ao arp -a, exibindo o cache de vizinhos IPv4/IPv6 (relação IP e MAC Address) junto com o estado de acessibilidade (Reachable, Stale, Permanent).',
+                syntax: [
+                    'Get-NetNeighbor',
+                    'Get-NetNeighbor -State Reachable'
+                ],
+                examples: [
+                    'Get-NetNeighbor',
+                    'Get-NetNeighbor -State Reachable'
+                ],
+                tip: 'Filtrar por -State Reachable mostra apenas os dispositivos da rede local com os quais houve comunicação recente confirmada.'
+            },
+            {
+                id: 25,
+                name: 'Get-NetRoute',
+                category: 'nivel2-ps',
+                topic: 'rotas-latencia',
+                categoryLabel: 'Nível 2 • PowerShell',
+                color: 'teal',
+                admin: false,
+                whatItDoes: 'Equivalente ao route print no PowerShell, exibindo a tabela de rotas IPv4 e IPv6 em formato de objetos ordenáveis por métrica, prefixo de destino e interface.',
+                syntax: [
+                    'Get-NetRoute',
+                    'Get-NetRoute -DestinationPrefix "0.0.0.0/0"'
+                ],
+                examples: [
+                    'Get-NetRoute',
+                    'Get-NetRoute -DestinationPrefix "0.0.0.0/0" | Sort-Object RouteMetric'
+                ],
+                tip: 'O prefixo "0.0.0.0/0" identifica rapidamente qual gateway padrão tem a menor métrica (prioridade de saída para a internet).'
+            },
+            {
+                id: 26,
+                name: 'Clear-DnsClientCache',
+                category: 'nivel2-ps',
+                topic: 'dns',
+                categoryLabel: 'Nível 2 • PowerShell',
+                color: 'violet',
+                admin: false,
+                whatItDoes: 'Equivalente nativo no PowerShell ao ipconfig /flushdns: limpa todas as entradas armazenadas no cache de resolução DNS do cliente Windows.',
+                syntax: [
+                    'Clear-DnsClientCache',
+                    'Clear-DnsClientCache -WhatIf'
+                ],
+                examples: [
+                    'Clear-DnsClientCache',
+                    'Clear-DnsClientCache -WhatIf'
+                ],
+                tip: 'O parâmetro -WhatIf simula a ação antes de executá-la, padrão seguro em cmdlets do PowerShell.'
+            },
+
+            // NÍVEL 2: COMANDOS LINUX (COMPARAÇÃO)
+            {
+                id: 27,
+                name: 'ip addr',
+                category: 'nivel2-linux',
+                topic: 'ip-interfaces',
+                categoryLabel: 'Nível 2 • Linux',
+                color: 'blue',
+                admin: false,
+                whatItDoes: 'Substituto moderno do antigo ifconfig nas distribuições Linux atuais (pacote iproute2). Exibe e gerencia interfaces de rede, endereços IP, máscaras, MACs e tabela de rotas.',
+                syntax: [
+                    'ip addr show',
+                    'ip a',
+                    'ip route show'
+                ],
+                examples: [
+                    'ip addr show',
+                    'ip a',
+                    'ip route show'
+                ],
+                tip: 'ip a é a forma abreviada mais usada no dia a dia; ip r (ou ip route show) exibe o gateway padrão.'
+            },
+            {
+                id: 28,
+                name: 'ss',
+                category: 'nivel2-linux',
+                topic: 'portas-trafego',
+                categoryLabel: 'Nível 2 • Linux',
+                color: 'green',
+                admin: true,
+                adminNote: 'Ver todos os processos (-p) exige root ou sudo',
+                whatItDoes: 'Socket Statistics: substituto moderno e ultrarrápido do netstat no Linux. Mostra sockets TCP/UDP abertos, portas em escuta, conexões ativas e os processos associados.',
+                syntax: [
+                    'ss -tuln',
+                    'ss -tunap',
+                    'ss -tuln | grep :<porta>'
+                ],
+                examples: [
+                    'ss -tuln',
+                    'ss -tunap',
+                    'ss -tuln | grep :80'
+                ],
+                tip: '-t (TCP), -u (UDP), -l (Listening/escuta), -n (numérico), -p (processos — rode com sudo para ver todos os PIDs).'
+            },
+            {
+                id: 29,
+                name: 'dig',
+                category: 'nivel2-linux',
+                topic: 'dns',
+                categoryLabel: 'Nível 2 • Linux',
+                color: 'orange',
+                admin: false,
+                whatItDoes: 'Domain Information Groper: ferramenta padrão e avançada de diagnóstico DNS no Linux. Consulta registros A, AAAA, MX, TXT, NS e mostra o tempo de resposta e servidor consultado.',
+                syntax: [
+                    'dig <nome>',
+                    'dig <nome> <tipo>',
+                    'dig @<servidor_DNS> <nome>'
+                ],
+                examples: [
+                    'dig google.com',
+                    'dig google.com MX',
+                    'dig @8.8.8.8 google.com'
+                ],
+                tip: 'Use @8.8.8.8 (ou outro IP) para consultar diretamente um servidor DNS específico e comparar respostas.'
+            },
+            {
+                id: 30,
+                name: 'traceroute',
+                category: 'nivel2-linux',
+                topic: 'rotas-latencia',
+                categoryLabel: 'Nível 2 • Linux',
+                color: 'violet',
+                admin: true,
+                adminNote: 'Rastreamento via TCP (-T) exige root ou sudo',
+                whatItDoes: 'Equivalente Linux ao tracert do Windows. Mapeia cada roteador (salto) entre o servidor Linux e o destino, com a vantagem de suportar rastreamento via pacotes TCP.',
+                syntax: [
+                    'traceroute <destino>',
+                    'traceroute -n <destino>',
+                    'traceroute -T -p <porta> <destino>'
+                ],
+                examples: [
+                    'traceroute google.com',
+                    'traceroute -n 8.8.8.8',
+                    'traceroute -T -p 443 google.com'
+                ],
+                tip: 'Quando firewalls bloqueiam ICMP/UDP, use sudo traceroute -T -p 443 <destino> para rastrear a rota usando TCP na porta HTTPS.'
+            },
+            {
+                id: 31,
+                name: 'mtr',
+                category: 'nivel2-linux',
+                topic: 'rotas-latencia',
+                categoryLabel: 'Nível 2 • Linux',
+                color: 'teal',
+                admin: false,
+                whatItDoes: 'My Traceroute: combina traceroute e ping em tempo real em uma única tela contínua, exibindo perda de pacotes, latência média, mínima, máxima e jitter de cada salto.',
+                syntax: [
+                    'mtr <destino>',
+                    'mtr -n <destino>',
+                    'mtr -rwc <numero> <destino>'
+                ],
+                examples: [
+                    'mtr google.com',
+                    'mtr -n 8.8.8.8',
+                    'mtr -rwc 20 google.com'
+                ],
+                tip: 'A opção -rwc 20 gera um relatório limpo (report-wide) após enviar 20 pacotes, perfeito para colar em chamados de suporte.'
+            },
+            {
+                id: 32,
+                name: 'nc (netcat)',
+                category: 'nivel2-linux',
+                topic: 'portas-trafego',
+                categoryLabel: 'Nível 2 • Linux',
+                color: 'red',
+                admin: false,
+                whatItDoes: 'Canivete suíço de redes TCP/IP no Linux: testa abertura de portas TCP/UDP, realiza transferência de arquivos, lê banners de serviços e cria conexões cliente/servidor.',
+                syntax: [
+                    'nc -zv <host> <porta>'
+                ],
+                examples: [
+                    'nc -zv 192.168.1.50 443',
+                    'nc -zv google.com 80'
+                ],
+                tip: '-z faz apenas varredura sem enviar dados e -v ativa saída detalhada (equivalente ao Test-NetConnection -Port).'
+            },
+            {
+                id: 33,
+                name: 'tcpdump',
+                category: 'nivel2-linux',
+                topic: 'portas-trafego',
+                categoryLabel: 'Nível 2 • Linux',
+                color: 'magenta',
+                admin: true,
+                adminNote: 'Captura de pacotes em interfaces exige root ou sudo',
+                whatItDoes: 'Analisador de pacotes em linha de comando (equivalente CLI ao Wireshark). Captura e inspeciona em tempo real o tráfego que passa pela placa de rede com filtros precisos por IP, porta ou protocolo.',
+                syntax: [
+                    'tcpdump -i <interface>',
+                    'tcpdump -i <interface> \'port <porta>\''
+                ],
+                examples: [
+                    'tcpdump -i eth0',
+                    'tcpdump -i eth0 \'port 80\'',
+                    'tcpdump -i any \'port 443\''
+                ],
+                tip: 'Requer privilégios de root (sudo). Use -i any para capturar em todas as interfaces de rede simultaneamente.'
+            },
+
+            // COMANDOS AVANÇADOS EXTRAS (WINDOWS & LINUX)
+            {
+                id: 34,
+                name: 'whoami /all',
+                category: 'nivel2-cmd',
+                topic: 'rede-seguranca',
+                categoryLabel: 'Nível 2 • Windows CMD',
+                color: 'purple',
+                admin: false,
+                whatItDoes: 'Exibe o usuário atual, o SID, todos os grupos de segurança do Active Directory (AD) aos quais pertence e os privilégios ativos da sessão. Essencial para diagnosticar falhas de acesso a pastas de rede e VPNs.',
+                syntax: [
+                    'whoami /all',
+                    'whoami /groups',
+                    'whoami /fqdn'
+                ],
+                examples: [
+                    'whoami /all',
+                    'whoami /groups'
+                ],
+                tip: 'Permite confirmar rapidamente se o usuário realmente recebeu o grupo de permissão de rede ou se precisa fazer logoff/logon para atualizar o token Kerberos.'
+            },
+            {
+                id: 35,
+                name: 'gpresult',
+                category: 'nivel2-cmd',
+                topic: 'rede-seguranca',
+                categoryLabel: 'Nível 2 • Windows CMD',
+                color: 'brown',
+                admin: true,
+                adminNote: 'Ver políticas de computador exige Administrador',
+                whatItDoes: 'Exibe o conjunto resultante de políticas de grupo (GPO) aplicadas ao usuário e ao computador no domínio. Crucial quando um firewall corporativo, proxy ou unidade mapeada está sendo bloqueado por diretiva.',
+                syntax: [
+                    'gpresult /r',
+                    'gpresult /r /scope:computer',
+                    'gpresult /h relatorio_gpo.html'
+                ],
+                examples: [
+                    'gpresult /r',
+                    'gpresult /h C:\\Temp\\gpo.html'
+                ],
+                tip: 'Rode gpupdate /force para reaplicar políticas de rede e em seguida gpresult /r para validar se foram aplicadas.'
+            },
+            {
+                id: 36,
+                name: 'nmcli',
+                category: 'nivel2-linux',
+                topic: 'ip-interfaces',
+                categoryLabel: 'Nível 2 • Linux',
+                color: 'cyan',
+                admin: true,
+                adminNote: 'Alterar conexões exige root ou sudo',
+                whatItDoes: 'Interface de linha de comando do NetworkManager no Linux. Permite inspecionar dispositivos de rede, conectar-se a redes Wi-Fi, configurar IPs estáticos, DNS e reiniciar placas de rede.',
+                syntax: [
+                    'nmcli device status',
+                    'nmcli connection show',
+                    'nmcli device wifi list'
+                ],
+                examples: [
+                    'nmcli device status',
+                    'nmcli connection show',
+                    'nmcli device wifi list'
+                ],
+                tip: 'Use nmcli connection up <nome> para reativar uma interface de rede sem precisar reiniciar o servidor.'
+            },
+            {
+                id: 37,
+                name: 'ethtool',
+                category: 'nivel2-linux',
+                topic: 'ip-interfaces',
+                categoryLabel: 'Nível 2 • Linux',
+                color: 'olive',
+                admin: true,
+                adminNote: 'Diagnóstico físico completo exige root ou sudo',
+                whatItDoes: 'Consulta e ajusta parâmetros físicos da placa de rede Ethernet no Linux, exibindo velocidade negociada (100Mbps, 1Gbps, 10Gbps), modo Duplex (Full/Half) e detecção física de cabo conectado (Link detected).',
+                syntax: [
+                    'ethtool <interface>',
+                    'ethtool -S <interface>'
+                ],
+                examples: [
+                    'ethtool eth0',
+                    'ethtool -S eth0'
+                ],
+                tip: 'Verifique a linha "Link detected: yes" para confirmar se há sinal elétrico/óptico físico entre a placa e o switch.'
+            },
+            {
+                id: 38,
+                name: 'whois',
+                category: 'nivel2-linux',
+                topic: 'dns',
+                categoryLabel: 'Nível 2 • Linux',
+                color: 'lime',
+                admin: false,
+                whatItDoes: 'Consulta bases de registro públicas (ICANN, Registro.br, ARIN) para exibir informações de titularidade, servidores DNS autoritativos (Nameservers), data de expiração de domínios e bloco ASN de endereços IP.',
+                syntax: [
+                    'whois <dominio_ou_IP>'
+                ],
+                examples: [
+                    'whois google.com',
+                    'whois 8.8.8.8'
+                ],
+                tip: 'Muito útil para descobrir se um site saiu do ar por expiração de domínio ou qual operadora/ASN é dona de um IP suspeito.'
+            },
+            {
+                id: 39,
+                name: 'ufw / iptables',
+                category: 'nivel2-linux',
+                topic: 'rede-seguranca',
+                categoryLabel: 'Nível 2 • Linux',
+                color: 'red',
+                admin: true,
+                adminNote: 'Visualizar e alterar regras de firewall exige root ou sudo',
+                whatItDoes: 'Ferramentas de gerenciamento do firewall do kernel Linux (Netfilter). Permitem listar rapidamente quais portas estão liberadas ou bloqueadas no servidor antes de culpar a rede externa.',
+                syntax: [
+                    'sudo ufw status verbose',
+                    'sudo iptables -L -n -v'
+                ],
+                examples: [
+                    'sudo ufw status verbose',
+                    'sudo iptables -L -n -v'
+                ],
+                tip: 'Use sudo ufw status (Ubuntu/Debian) ou sudo iptables -L -n -v (universal) para checar se o próprio host está descartando pacotes.'
+            }
+        ];
+
+        // Estado da aplicação
+        let currentFilter = 'all';
+        let currentTopic = 'all';
+        let searchQuery = '';
+        let toastTimeout = null;
+
+        // Copiar comando para área de transferência
+        function copyToClipboard(text) {
+            if (!text) return;
+
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+
+            try {
+                document.execCommand('copy');
+                showToast('Copiado: ' + text);
+            } catch (err) {
+                showToast('Não foi possível copiar o comando.');
+            } finally {
+                document.body.removeChild(textarea);
+            }
+        }
+
+        // Exibir notificação Toast
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-msg');
+            if (!toast || !toastMsg) return;
+
+            toastMsg.textContent = message;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 2600);
+        }
+
+        // Escapar HTML para evitar injeção e conflitos de aspas
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        // Renderizar Kit de Emergência (Comandos Mais Usados)
+        function renderQuickCommands() {
+            const container = document.getElementById('quick-commands');
+            if (!container) return;
+
+            container.innerHTML = quickCommandsList.map(cmd => `
+                <button type="button" data-cmd="${escapeHtml(cmd)}" onclick="copyToClipboard(this.getAttribute('data-cmd'))" 
+                    class="group inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-goldglow/15 dark:bg-abyss/80 dark:hover:bg-deepsea/60 border border-deepsea/20 dark:border-deepsea hover:border-goldglow dark:hover:border-goldglow text-xs font-mono text-abyss dark:text-slate-100 transition">
+                    <span>${escapeHtml(cmd)}</span>
+                    <i data-lucide="copy" class="w-3.5 h-3.5 text-deepsea dark:text-lagoon group-hover:text-rust dark:group-hover:text-goldglow transition"></i>
+                </button>
+            `).join('');
+        }
+
+        // Renderizar Grid de Cards
+        function renderCommands() {
+            const grid = document.getElementById('commands-grid');
+            const emptyState = document.getElementById('empty-state');
+            const resultsCount = document.getElementById('results-count');
+            if (!grid || !emptyState || !resultsCount) return;
+
+            const filtered = commandsData.filter(cmd => {
+                if (currentFilter === 'admin' && !cmd.admin) return false;
+                if (currentFilter !== 'all' && currentFilter !== 'admin' && cmd.category !== currentFilter) return false;
+                if (currentTopic !== 'all' && cmd.topic !== currentTopic) return false;
+
+                if (searchQuery.trim() !== '') {
+                    const q = searchQuery.toLowerCase();
+                    const inName = cmd.name.toLowerCase().includes(q);
+                    const inDesc = cmd.whatItDoes.toLowerCase().includes(q);
+                    const inTip = cmd.tip.toLowerCase().includes(q);
+                    const inSyntax = cmd.syntax.some(s => s.toLowerCase().includes(q));
+                    const inExamples = cmd.examples.some(e => e.toLowerCase().includes(q));
+                    const inCat = cmd.categoryLabel.toLowerCase().includes(q);
+                    return inName || inDesc || inTip || inSyntax || inExamples || inCat;
+                }
+                return true;
+            });
+
+            if (filtered.length === commandsData.length) {
+                resultsCount.textContent = `Exibindo todos os ${commandsData.length} comandos`;
+            } else {
+                resultsCount.textContent = `Exibindo ${filtered.length} de ${commandsData.length} comandos`;
+            }
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                if (window.lucide) lucide.createIcons();
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+
+            grid.innerHTML = filtered.map(cmd => {
+                const style = colorStyles[cmd.color] || colorStyles.blue;
+
+                return `
+                <article class="card-night-market w-full max-w-xl md:max-w-none flex flex-col bg-white dark:bg-[#001D27] rounded-2xl border border-deepsea/20 dark:border-deepsea/80 border-t-4 ${style.border} shadow-sm hover:shadow-lg dark:hover:border-lagoon transition-all duration-200 overflow-hidden text-center sm:text-left">
+                    <!-- Cabeçalho do Card -->
+                    <div class="p-5 pb-3">
+                        <div class="flex flex-wrap items-center justify-center sm:justify-between gap-2 mb-2.5">
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-bold tracking-wide uppercase ${style.badge}">
+                                <span class="w-1.5 h-1.5 rounded-full ${style.dot}"></span>
+                                ${escapeHtml(cmd.categoryLabel)}
+                            </span>
+                            ${cmd.admin ? `
+                                <span title="${escapeHtml(cmd.adminNote || 'Requer privilégios de Administrador ou root')}" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-rust/15 text-rust dark:bg-rust/30 dark:text-goldglow border border-rust/40 dark:border-goldglow/50">
+                                    <i data-lucide="shield-alert" class="w-3 h-3"></i>
+                                    Admin / Root
+                                </span>
+                            ` : ''}
+                        </div>
+                        <div class="flex items-baseline justify-center sm:justify-between">
+                            <h3 class="text-xl font-bold font-mono text-deepsea dark:text-goldglow tracking-tight">
+                                <span class="text-rust dark:text-lagoon font-sans text-sm font-semibold mr-1">#${cmd.id}</span>${escapeHtml(cmd.name)}
+                            </h3>
+                        </div>
+                    </div>
+
+                    <!-- Corpo Explicativo -->
+                    <div class="px-5 flex-grow flex flex-col gap-4">
+                        <!-- O que faz -->
+                        <div>
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-deepsea/70 dark:text-lagoon mb-1">
+                                Função e Objetivo
+                            </h4>
+                            <p class="text-sm text-slate-700 dark:text-slate-200 leading-relaxed">
+                                ${escapeHtml(cmd.whatItDoes)}
+                            </p>
+                        </div>
+
+                        <!-- Sintaxe -->
+                        <div>
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-deepsea/70 dark:text-lagoon mb-1.5">
+                                Sintaxe e Parâmetros
+                            </h4>
+                            <div class="bg-slate-100/90 dark:bg-abyss/90 rounded-xl p-3 border border-deepsea/15 dark:border-deepsea/70 space-y-1 overflow-x-auto text-left">
+                                ${cmd.syntax.map(line => `
+                                    <div class="font-mono text-xs text-deepsea dark:text-slate-200 whitespace-pre">${escapeHtml(line)}</div>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <!-- Exemplos Copiáveis -->
+                        <div>
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-deepsea/70 dark:text-lagoon mb-1.5 flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-0.5">
+                                <span>Exemplos Práticos</span>
+                                <span class="text-[10px] font-medium normal-case text-rust dark:text-goldglow">Toque para copiar</span>
+                            </h4>
+                            <div class="space-y-1.5">
+                                ${cmd.examples.map(ex => `
+                                    <button type="button" data-cmd="${escapeHtml(ex)}" onclick="copyToClipboard(this.getAttribute('data-cmd'))" 
+                                        class="w-full group flex items-center justify-between gap-2 text-left bg-abyss hover:bg-[#002836] dark:bg-abyss dark:hover:bg-deepsea/50 text-goldglow px-3 py-2.5 rounded-xl border border-deepsea/60 hover:border-goldglow transition">
+                                        <code class="font-mono text-xs break-all"><span class="text-lagoon mr-1">$</span>${escapeHtml(ex)}</code>
+                                        <span class="shrink-0 p-1 rounded-md bg-deepsea/50 group-hover:bg-goldglow text-lagoon group-hover:text-abyss transition">
+                                            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                                        </span>
+                                    </button>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dica / Utilidade no Rodapé do Card -->
+                    <div class="mt-5 px-5 py-3.5 bg-deepsea/5 dark:bg-deepsea/25 border-t border-deepsea/15 dark:border-deepsea/60 flex flex-col sm:flex-row items-center sm:items-start gap-2.5 text-center sm:text-left">
+                        <i data-lucide="lightbulb" class="w-4 h-4 text-rust dark:text-goldglow shrink-0 sm:mt-0.5"></i>
+                        <p class="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+                            <strong class="font-bold text-rust dark:text-goldglow">Dica:</strong> ${escapeHtml(cmd.tip)}
+                        </p>
+                    </div>
+                </article>
+                `;
+            }).join('');
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        // Gerenciamento de Eventos e Filtros
+        document.addEventListener('DOMContentLoaded', () => {
+            renderQuickCommands();
+            renderCommands();
+            if (window.lucide) lucide.createIcons();
+
+            const filterButtons = document.querySelectorAll('.filter-btn');
+            filterButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    filterButtons.forEach(b => {
+                        b.classList.remove('active', 'bg-goldglow', 'text-abyss', 'font-semibold', 'shadow-amber-glow');
+                        if (b.dataset.filter !== 'admin') {
+                            b.classList.add('bg-slate-100', 'dark:bg-deepsea/30', 'text-deepsea', 'dark:text-slate-200', 'font-medium');
+                        }
+                    });
+
+                    btn.classList.add('active');
+                    if (btn.dataset.filter !== 'admin') {
+                        btn.classList.remove('bg-slate-100', 'dark:bg-deepsea/30', 'text-deepsea', 'dark:text-slate-200', 'font-medium');
+                        btn.classList.add('bg-goldglow', 'text-abyss', 'font-semibold', 'shadow-amber-glow');
+                    }
+
+                    currentFilter = btn.dataset.filter;
+                    renderCommands();
+                });
+            });
+
+            const topicButtons = document.querySelectorAll('.topic-btn');
+            topicButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    topicButtons.forEach(b => {
+                        b.classList.remove('active', 'bg-deepsea', 'text-white', 'dark:bg-lagoon', 'dark:text-abyss', 'font-semibold');
+                        b.classList.add('bg-slate-100', 'dark:bg-[#00222E]', 'text-deepsea', 'dark:text-slate-300');
+                    });
+                    btn.classList.add('active', 'bg-deepsea', 'text-white', 'dark:bg-lagoon', 'dark:text-abyss', 'font-semibold');
+                    btn.classList.remove('bg-slate-100', 'dark:bg-[#00222E]', 'text-deepsea', 'dark:text-slate-300');
+                    currentTopic = btn.dataset.topic;
+                    renderCommands();
+                });
+            });
+
+            const searchInput = document.getElementById('search-input');
+            const clearSearchBtn = document.getElementById('clear-search');
+
+            if (searchInput && clearSearchBtn) {
+                searchInput.addEventListener('input', (e) => {
+                    searchQuery = e.target.value;
+                    if (searchQuery.length > 0) {
+                        clearSearchBtn.classList.remove('hidden');
+                    } else {
+                        clearSearchBtn.classList.add('hidden');
+                    }
+                    renderCommands();
+                });
+
+                clearSearchBtn.addEventListener('click', () => {
+                    searchInput.value = '';
+                    searchQuery = '';
+                    clearSearchBtn.classList.add('hidden');
+                    renderCommands();
+                    searchInput.focus();
+                });
+            }
+
+            const resetFiltersBtn = document.getElementById('reset-filters-btn');
+            if (resetFiltersBtn) {
+                resetFiltersBtn.addEventListener('click', () => {
+                    if (searchInput) searchInput.value = '';
+                    searchQuery = '';
+                    if (clearSearchBtn) clearSearchBtn.classList.add('hidden');
+                    const allBtn = document.querySelector('.filter-btn[data-filter="all"]');
+                    if (allBtn) allBtn.click();
+                    const allTopicBtn = document.querySelector('.topic-btn[data-topic="all"]');
+                    if (allTopicBtn) allTopicBtn.click();
+                });
+            }
+
+            function toggleTheme() {
+                document.documentElement.classList.toggle('dark');
+                const isDark = document.documentElement.classList.contains('dark');
+                localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            }
+
+            if (localStorage.getItem('theme') === 'light') {
+                document.documentElement.classList.remove('dark');
+            } else {
+                document.documentElement.classList.add('dark');
+            }
+
+            const desktopToggle = document.getElementById('theme-toggle-desktop');
+            const mobileToggle = document.getElementById('theme-toggle-mobile');
+            if (desktopToggle) desktopToggle.addEventListener('click', toggleTheme);
+            if (mobileToggle) mobileToggle.addEventListener('click', toggleTheme);
+        });
+    </script>
+</body>
+</html>
